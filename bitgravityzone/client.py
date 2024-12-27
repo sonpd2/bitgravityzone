@@ -143,27 +143,92 @@ class GravityZone:
 
     def create_company(
         self,
-        type:               int,
-        name:               str,
-        parent_id:          Optional[str] = None,
+        name: str,
+        companyType:       int = 1, 
+        licenseType:       int = 3,
+        assignedProductType: int = 0,
+        manageRemoteEnginesScanning: bool = True,
+        manageHyperDetect: bool = False,
+        manageSandboxAnalyzer: bool = False,
+        endSubscription:    Optional[str] = None,
         address:            Optional[str] = None,
         phone:              Optional[str] = None,
-        managed_by_partner: bool = True,
-        enforce_2fa:        bool = True,
+        managed_by_partner: bool = True
     ):
+        """
+        Creates a company with the specified attributes.
+
+        Args:
+            companyType (int): The type of the company (default: 1 for Customer).
+            name (str): The unique name of the company.
+            licenseType (int): The type of license (default: 3 for Monthly subscription).
+            assignedProductType (int): The product type assigned (default: 0 for Endpoint Security).
+            endSubscription (str): Subscription end date in YYYY-MM-DD format.
+            manageRemoteEnginesScanning (bool): Enables remote engine scanning (default: True).
+            manageHyperDetect (bool): Enables HyperDetect add-on (default: False).
+            manageSandboxAnalyzer (bool): Enables Sandbox Analyzer add-on (default: False).
+            address (Optional[str]): The company's address (default: None).
+            phone (Optional[str]): The company's phone number (default: None).
+            managed_by_partner (bool): Indicates if managed by a partner (default: True).
+
+        Returns:
+            company_id (str)
+        """
         params = {
-            'type':                type,
+            'type':                companyType,
             'name':                name,
-            'parentId':            parent_id,
             'address':             address,
             'phone':               phone,
             'canBeManagedByAbove': managed_by_partner,
-            'enforce2FA':          enforce_2fa,
             "licenseSubscription": {
-                "type": 5, #custom input for license
-                },
+                        "type": licenseType, 
+                        # "endSubscription": endSubscription,
+                        "assignedProductType": assignedProductType,
+                        "ownUse": {
+                            "manageRemoteEnginesScanning": manageRemoteEnginesScanning,
+                            "manageHyperDetect": manageHyperDetect,
+                            "manageSandboxAnalyzer": manageSandboxAnalyzer,
+                        },
+                    },
         }
         return self.call('companies', 'createCompany', params)
+
+    def update_company(
+        self,
+        company_id: str,
+        name: str,
+        companyType:       int = 1, 
+        address:            Optional[str] = None,
+        phone:              Optional[str] = None,
+    ):
+        """
+        Update a company with the specified attributes.
+
+        Args:
+            companyType (int): The type of the company (default: 1 for Customer).
+            name (str): The unique name of the company.
+            address (Optional[str]): The company's address (default: None).
+            phone (Optional[str]): The company's phone number (default: None).
+        Returns:
+            None
+        """
+        params = {
+            'id':                  company_id,       
+            'type':                companyType,
+            'name':                name,
+            'address':             address,
+            'phone':               phone,
+        }
+        return self.call('companies', 'updateCompanyDetails', params)
+
+    def delete_company(self, company_id: str) -> None:
+        '''Delete an company account.
+
+        Args:
+            company_id: The ID of the company to be delete.
+        '''
+        params = {'companyId': company_id}
+        return self.call('companies', 'deleteCompany', params)
 
     def suspend_company(self, company_id: str, recursive: bool) -> None:
         '''Suspends an active company account.
