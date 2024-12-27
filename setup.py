@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="bitgravityzone",
-    version="0.0.1",
+    version="0.0.2",
     author="son",
     author_email="son@example.com",
     description="GravityZone API",
