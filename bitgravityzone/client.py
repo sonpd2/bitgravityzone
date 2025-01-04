@@ -313,9 +313,52 @@ class GravityZone:
     def get_custom_groups(self, **kwargs):
         raise NotImplementedError
 
-    def get_endpoints(self, **kwargs):
-        params = {}
+    def get_endpoints(self, company_id: str):
+        """
+        Retrieves the list of endpoints for a specified company.
+
+        Args:
+            company_id (str): The ID of the company whose endpoints are to be fetched.
+
+        Returns:
+            Response from the 'getEndpointsList' API call.
+        """
+        params = {"parentId": company_id}
         return self.call('network', 'getEndpointsList', params)
+
+    def get_endpoint(self, endpoint_id: str, include_log: bool = True):
+        """
+        Retrieves detailed information about a specific endpoint.
+
+        Args:
+            endpoint_id (str): The ID of the endpoint to be fetched.
+            include_log (bool, optional): Whether to include scan logs in the response. Defaults to True.
+
+        Returns:
+            Response from the 'getManagedEndpointDetails' API call.
+        """
+        params = {
+            "endpointId": endpoint_id,
+            "options": {
+                "includeScanLogs": include_log
+            }
+        }
+        return self.call('network', 'getManagedEndpointDetails', params)
+
+    def delete_endpoint(self, endpoint_id: str):
+        """
+        Deletes a specific endpoint.
+
+        Args:
+            endpoint_id (str): The ID of the endpoint to be deleted.
+
+        Returns:
+            Response from the 'deleteEndpoint' API call.
+        """
+        params = {
+            "endpointId": endpoint_id
+        }
+        return self.call('network', 'deleteEndpoint', params)
 
     def get_scan_tasks(sel, **kwargs):
         raise NotImplementedError
