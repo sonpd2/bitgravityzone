@@ -354,8 +354,35 @@ class GravityZone:
         params = {'packageId': package_id}
         return self.call('packages', 'getPackageDetails', params)
 
-    def create_package(self, **kwargs):
-        raise NotImplementedError
+    def create_package(self,
+        company_id:   str,
+        package_name: str,
+    ):
+        """
+        Creates a security package with the specified configuration.
+
+        Args:
+            company_id (str): The ID of the company for which the package is being created.
+            package_name (str): The name of the package.
+
+        Returns:
+            Response from the 'createPackage' API call.
+        """
+        params = {
+                    "companyId": company_id,
+                    "packageName": package_name,
+                    "description": f'{package_name} for company_id {company_id}',
+                    "scanMode": {
+                        "type": 2,
+                        "computers": {
+                            "main": 3
+                        },
+                        "vms": {
+                            "main": 3
+                        }
+                    }
+                }
+        return self.call('packages', 'createPackage', params)
 
     def delete_package(self, package_id: str) -> None:
         params = {'packageId': package_id}
