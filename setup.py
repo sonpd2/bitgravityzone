@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="bitgravityzone",
-    version="0.0.4",
+    version="0.0.5",
     author="son",
     author_email="son@example.com",
     description="GravityZone API",
@@ -14,5 +14,9 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
+    ],
+    python_requires=">=3.6",
+    install_requires=[
+        "httpx>=0.24.0",  # Specify the version of httpx you require
     ],
 )
