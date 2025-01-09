@@ -60,6 +60,10 @@ class GravityZone:
         while True:
             params.update({'page': page, 'perPage': self.items_per_page})
             resp = self.call(endpoint, method, params, service)
+            
+            if resp.get('total') == 0:
+                break
+            
             yield from resp['items']
 
             if resp['page'] == resp['pagesCount']:
@@ -268,6 +272,42 @@ class GravityZone:
         params = {'companyId': company_id, 'returnAllProducts': return_all}
         # TODO: doesn't return an array (is this the behaviour for arrays with one item?)
         return self.call('licensing', 'getLicenseInfo', params)
+
+    def update_license(
+        self,
+        company_id: Optional[str] = None,
+        manageHyperDetect: bool = None,
+        manageSandboxAnalyzer: bool = None,
+    ):
+        """
+        Updates the license subscription for a company.
+
+        Args:
+            company_id (Optional[str]): The ID of the target company. If not provided,
+                                        the company linked to the API key will be used.
+            manageHyperDetect (bool): Whether to enable or disable HyperDetect management. Default is False.
+            manageSandboxAnalyzer (bool): Whether to enable or disable Sandbox Analyzer management. Default is False.
+
+        Returns:
+            dict: The API response containing the updated license information.
+
+        Raises:
+            ValueError: If `company_id` is invalid.
+            RuntimeError: If the API call fails.
+        """
+        # Validate company_id if provided
+        if company_id is not None and not company_id.strip():
+            raise ValueError("company_id must not be an empty string.")
+
+        # Prepare API parameters
+        params = {
+            "companyId": company_id,
+            "ownUse": {
+                "manageHyperDetect": manageHyperDetect,
+                "manageSandboxAnalyzer": manageSandboxAnalyzer,
+            },
+        }
+        return self.call("licensing", "setMonthlySubscription", params)
 # endregion
 
 # region NETWORK
@@ -359,6 +399,40 @@ class GravityZone:
             "endpointId": endpoint_id
         }
         return self.call('network', 'deleteEndpoint', params)
+
+    def create_scan_endpoint(self, endpoint_id: str, scan_type: int = 1) -> dict:
+        """
+        Initiates a scan task on the specified endpoint.
+
+        Parameters:
+            endpoint_id (str): The unique identifier of the endpoint to be scanned.
+            scan_type (int): The type of scan to perform.
+                            Available options:
+                            1 - Quick Scan
+                            2 - Full Scan
+                            3 - Memory Scan
+                            4 - Custom Scan (default: 1)
+
+        Returns:
+            dict: The response from the API.
+
+        Raises:
+            ValueError: If `scan_type` is invalid or `endpoint_id` is empty.
+        """
+        # Validate scan_type
+        if scan_type not in {1, 2, 3, 4}:
+            raise ValueError(f"Invalid scan_type {scan_type}. Must be one of: 1, 2, 3, 4.")
+        
+        # Validate endpoint_id
+        if not endpoint_id.strip():
+            raise ValueError("endpoint_id cannot be empty.")
+
+        params = {
+            "targetIds": [endpoint_id],
+            "type": scan_type,
+            "returnAllTaskIds": True,
+        }
+        return self.call("network", "createScanTask", params)
 
     def get_scan_tasks(sel, **kwargs):
         raise NotImplementedError
