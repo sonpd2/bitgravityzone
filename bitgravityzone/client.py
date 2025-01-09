@@ -324,7 +324,7 @@ class GravityZone:
             Response from the 'getEndpointsList' API call.
         """
         params = {"parentId": company_id}
-        return self.call('network', 'getEndpointsList', params)
+        return self.paginate('network', 'getEndpointsList', params)
 
     def get_endpoint(self, endpoint_id: str, include_log: bool = True):
         """
