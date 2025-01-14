@@ -29,10 +29,11 @@ class GravityZone:
         method:   str,
         params:   Dict[str, Any],
         service:  Optional[str] = None,
+        timeout: int = 30
     ):
         body = {'id': 1, 'jsonrpc': '2.0', 'method': method, 'params': params}
         path = '/'.join(filter(None, (endpoint, service)))
-        resp = self.client.post(path, json=body)
+        resp = self.client.post(path, json=body, timeout=timeout)
         try:
             resp.raise_for_status()
         except HTTPError as e:
@@ -565,12 +566,11 @@ class GravityZone:
 # region PUSH
     def set_push_settings(
         self,
-        enabled:      bool,
-        service:      'Literal["jsonRPC", "splunk", "cef"]',
         url:          str,
-        validate_ssl: bool,
-        auth:         str,
-        event_types:  List[str],
+        auth:         str = 'MUST',
+        enabled:      bool = True,
+        service:      'Literal["jsonRPC", "splunk", "cef"]' = 'jsonRPC',
+        validate_ssl: bool = True,
         companies:    Optional[List[str]] = None,
     ) -> bool:
         '''Sets the push event settings.
@@ -584,6 +584,38 @@ class GravityZone:
                 web service.
             auth: Authorization header.
             event_types: Event types to be sent to the web service.
+            {
+                "hwid-change": true,
+                "modules": true,
+                "sva": true,
+                "registration": true,
+                "supa-update-status": true,
+                "av": true,
+                "aph": true,
+                "fw": true,
+                "avc": true,
+                "uc": true,
+                "dp": true,
+                "sva-load": true,
+                "task-status": true,
+                "exchange-malware": true,
+                "network-sandboxing": true,
+                "adcloud": true,
+                "exchange-user-credentials": true,
+                "hd": false,
+                "antiexploit": true,
+                "endpoint-moved-out": true,
+                "endpoint-moved-in": true,
+                "troubleshooting-activity": true,
+                "uninstall": true,
+                "install": true,
+                "new-incident": true,
+                "network-monitor": true,
+                "ransomware-mitigation": true,
+                "security-container-update-available": true,
+                "partner-changed": true,
+                "device-control": false
+            }
             companies: Companies under your management for which you
                 want to receive the events (you need to mention your own
                 company as well). If not set, you will receive events
@@ -599,11 +631,64 @@ class GravityZone:
                 'requireValidSslCertificate': validate_ssl,
                 auth_key:                     auth,
             },
-            'subscribeToEventTypes':          event_types,
+            'subscribeToEventTypes':
+                {
+                    "hwid-change": True,
+                    "modules": True,
+                    "sva": True,
+                    "registration": True,
+                    "supa-update-status": True,
+                    "av": True,
+                    "aph": True,
+                    "fw": True,
+                    "avc": True,
+                    "uc": True,
+                    "dp": True,
+                    "sva-load": True,
+                    "task-status": True,
+                    "exchange-malware": True,
+                    "network-sandboxing": True,
+                    "adcloud": True,
+                    "exchange-user-credentials": True,
+                    "hd": True,
+                    "antiexploit": True,
+                    "endpoint-moved-out": True,
+                    "endpoint-moved-in": True,
+                    "troubleshooting-activity": True,
+                    "uninstall": True,
+                    "install": True,
+                    "new-incident": True,
+                    "network-monitor": True,
+                    "ransomware-mitigation": True,
+                    "security-container-update-available": True,
+                    "partner-changed": True,
+                    "device-control": True
+                }
+            ,
             'subscribeToCompanies':           companies or None,
         }
 
         return self.call('push', 'setPushEventSettings', params)
+
+    def get_push_settings(self):
+        params = {}
+        return self.call('push', 'getPushEventSettings', params)
+    
+    def test_push_event(self,
+        eventType:  str = "av",
+        data: dict = {"malware_name": "Test malware name"}
+    ):
+        event_list = ["hwid-change","modules","sva","registration","supa-update-status","av","aph","fw","avc","uc","dp","sva-load","task-status","exchange-malware","network-sandboxing","adcloud","exchange-user-credentials","hd","antiexploit","endpoint-moved-out","endpoint-moved-in","troubleshooting-activity","uninstall","install","new-incident","network-monitor","ransomware-mitigation","security-container-update-available","partner-changed","device-control"]
+            # Validate the eventType
+        if eventType not in event_list:
+            raise ValueError(f"Invalid eventType: {eventType}. Must be one of {event_list}.")
+
+        params = {
+           "eventType": eventType,
+           "data": data
+        }
+        return self.call('push', 'sendTestPushEvent', params)
+
 # endregion
 
 # region INCIDENTS
