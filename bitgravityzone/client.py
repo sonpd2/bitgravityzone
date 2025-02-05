@@ -149,10 +149,12 @@ class GravityZone:
     def create_company(
         self,
         name: str,
+        reservedSlots:     int,
+        licenseKey:        Optional[str] = None,
         companyType:       int = 1, 
         licenseType:       int = 3,
         assignedProductType: int = 0,
-        manageRemoteEnginesScanning: bool = True,
+        manageRemoteEnginesScanning: bool = False,
         manageHyperDetect: bool = False,
         manageSandboxAnalyzer: bool = False,
         endSubscription:    Optional[str] = None,
@@ -166,7 +168,8 @@ class GravityZone:
         Args:
             companyType (int): The type of the company (default: 1 for Customer).
             name (str): The unique name of the company.
-            licenseType (int): The type of license (default: 3 for Monthly subscription).
+            licenseType (int): The type of license (default: 3 for Monthly subscription), 2 (license)
+
             assignedProductType (int): The product type assigned (default: 0 for Endpoint Security).
             endSubscription (str): Subscription end date in YYYY-MM-DD format.
             manageRemoteEnginesScanning (bool): Enables remote engine scanning (default: True).
@@ -179,23 +182,36 @@ class GravityZone:
         Returns:
             company_id (str)
         """
-        params = {
-            'type':                companyType,
-            'name':                name,
-            'address':             address,
-            'phone':               phone,
-            'canBeManagedByAbove': managed_by_partner,
-            "licenseSubscription": {
-                        "type": licenseType, 
-                        # "endSubscription": endSubscription,
-                        "assignedProductType": assignedProductType,
-                        "ownUse": {
-                            "manageRemoteEnginesScanning": manageRemoteEnginesScanning,
-                            "manageHyperDetect": manageHyperDetect,
-                            "manageSandboxAnalyzer": manageSandboxAnalyzer,
+        if licenseType == 2:
+            params = {
+                'type':                companyType,
+                'name':                name,
+                'address':             address,
+                'phone':               phone,
+                'canBeManagedByAbove': managed_by_partner,
+                "licenseSubscription": {
+                            "type": licenseType, 
+                            "licenseKey": licenseKey
                         },
-                    },
-        }
+            }
+        else:
+            params = {
+                'type':                companyType,
+                'name':                name,
+                'address':             address,
+                'phone':               phone,
+                'canBeManagedByAbove': managed_by_partner,
+                "licenseSubscription": {
+                            "type": licenseType,
+                            "reservedSlots": reservedSlots,
+                            "assignedProductType": assignedProductType,
+                            "ownUse": {
+                                "manageRemoteEnginesScanning": manageRemoteEnginesScanning,
+                                "manageHyperDetect": manageHyperDetect,
+                                "manageSandboxAnalyzer": manageSandboxAnalyzer,
+                            },
+                        },
+            }   
         return self.call('companies', 'createCompany', params)
 
     def update_company(
@@ -309,6 +325,43 @@ class GravityZone:
             },
         }
         return self.call("licensing", "setMonthlySubscription", params)
+
+    def set_license(self, company_id: str, licenseKey: str):
+        """
+        Sets a license key for a specified company by making an API call.
+
+        This function validates the provided `company_id` to ensure it is not empty,
+        then constructs the necessary parameters and sends a request to the API
+        to set the license key for the company.
+
+        Parameters:
+            company_id (str): The unique identifier of the company.
+                            Must not be an empty string.
+            licenseKey (str): The license key to be assigned to the company.
+
+        Raises:
+            ValueError: If `company_id` is an empty string after stripping whitespace.
+
+        Returns:
+            Any: The response from the API call to the licensing system.
+
+        Example:
+            >>> client.set_license("12345", "ABC-XYZ-9876")
+        """
+        
+        # Validate company_id if provided
+        if company_id is not None and not company_id.strip():
+            raise ValueError("company_id must not be an empty string.")
+
+        # Prepare API parameters
+        params = {
+            "licenseKey": licenseKey,
+            "companyId": company_id
+        }
+
+        # Call the API and return its response
+        return self.call("licensing", "setLicenseKey", params)
+
 # endregion
 
 # region NETWORK
