@@ -79,40 +79,105 @@ class GravityZone:
         params = {'companyId': company_id}
         return self.paginate('accounts', 'getAccountsList', params)
 
+    def get_account_detail(self, account_id: str):
+        '''Returns the user accounts visible to the account which has
+        generated the API key.
+        '''
+        params = {'accountId': account_id}
+        return self.call('accounts', 'getAccountDetails', params)
+
     def create_account(
-        self,
-        email:      str,
-        profile:    Dict[str, str],
-        password:   Optional[str] = None,
-        company_id: Optional[str] = None,
-        role:       AccountRole = 1,
-        rights:     Optional[Dict[str, bool]] = None,
-        target_ids: List[str] = None,
-    ) -> str:
-        '''Creates a user account with password and returns its ID.
+            self,
+            email:      str,
+            password:   str,
+            target_ids: List[str],
+            company_id: str = '675fd66b42b81864630be143',
+            role:       AccountRole = 5
+        ) -> str:
+        '''Creates a user account with the specified email, password, and role, then returns the account ID.
 
         Args:
-            email: The email address for the new account.
+            email (str): The email address for the new account.
+            password (str): The password for the new account.
+            company_id (Optional[str], optional): The ID of the company to associate the account with. 
+                Defaults to '675fd66b42b81864630be143' Mobifone company.
+            role (AccountRole, optional): The role assigned to the user. Defaults to 5. 
+                Possible values:
+                    1 - Company Administrator
+                    2 - Network Administrator
+                    3 - Reporter
+                    4 - Partner
+                    5 - Custom
+            target_ids (List[str], optional): A list of target IDs associated with the account. Defaults to None.
+
+        Returns:
+            str: The newly created account's ID.
         '''
-        if role == AccountRole.CUSTOM and rights is None:
-            raise ValueError('For custom role, rights must be specified.')
-
-        params = {k: v for k, v in {
-            'email':     email,
-            'profile':   profile,
-            'password':  password,
-            'companyId': company_id,
-            'role':      role,
-            'rights':    rights,
-            'targetIds': target_ids,
-        }.items() if v is not None}
-
+        params = {
+           "email": email,
+           "profile": {
+                "fullName": f'Khách hàng Mobifone',
+               "language": "vi_VN",
+               "timezone": "Asia/Ho_Chi_Minh"
+           },
+           "password": password,
+           "role": role,
+           "rights": {
+               "manageCompanies": False,
+               "companyManager": False,              
+               "manageInventory": True,
+               "managePoliciesRead": True,
+               "managePoliciesWrite": False,
+               "manageRemoteShell": True,
+               "manageReports": True,
+               "manageUsers": False
+           },
+           "companyId": company_id,
+           "targetIds": target_ids
+        }
         return self.call('accounts', 'createAccount', params)
 
-    def update_account(self, **kwargs):
-        raise NotImplementedError
+    def update_account_password(self, account_id: str, password: str) -> None:
+        '''Updates the password for a given user account.
+
+        Args:
+            account_id (str): The unique ID of the account to be updated.
+            password (str): The new password to set for the account.
+
+        Returns:
+            None
+        '''
+        params = {
+        "accountId": account_id,
+        "password": password
+        }
+        return self.call('accounts', 'updateAccount', params)
+
+    def update_target_ids_account(self, account_id: str, target_ids: List[str]) -> None:
+        '''Updates the list of target IDs associated with a user account.
+
+        Args:
+            account_id (str): The unique ID of the account to be updated.
+            target_ids (List[str]): A list of target IDs to associate with the account.
+
+        Returns:
+            None
+        '''
+        params = {
+        "accountId": account_id,
+        "targetIds": target_ids
+        }
+        return self.call('accounts', 'updateAccount', params)
 
     def delete_account(self, account_id: str) -> None:
+        '''Deletes a user account by its unique ID.
+
+        Args:
+            account_id (str): The unique ID of the account to be deleted.
+
+        Returns:
+            None
+        '''
         params = {'accountId': account_id}
         return self.call('accounts', 'deleteAccount', params)
 
